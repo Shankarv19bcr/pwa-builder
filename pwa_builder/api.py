@@ -54,7 +54,7 @@ def get_meta(doctype, project,with_parent=False,cached=True) -> "Meta":
 	site_url = url.scheme + "://" + url.netloc
 	end_point = "/api/method/frappe.desk.form.load.getdoctype?doctype={0}&with_parent=1".format(doctype)
 
-	response = call(site_url, end_point, doc.user_id, doc.get_password("password"), doc.project_title)
+	response = call(doctype, site_url, end_point, doc.user_id, doc.get_password("password"), doc.project_title)
 	if response.ok:
 		meta = response.json()
 		if with_parent == True:
@@ -66,11 +66,12 @@ def get_meta(doctype, project,with_parent=False,cached=True) -> "Meta":
 	else:
 		response.raise_for_status()
 
-def call(url, end_point, username, password, project, force=False, count=1):
+def call(doctype, url, end_point, username, password, project, force=False, count=1):
 	cookies = get_cookies(url, username, password, project, force=force)
 	response = requests.get(url+end_point, cookies=cookies)
+	frappe.log_error(f"{doctype} Response: {count}", response.content)
 	if response.status_code == 403 and count <= 3:
-		response = call(url, end_point, username, password, project, force=True, count=count+1)
+		response = call(doctype, url, end_point, username, password, project, force=True, count=count+1)
 
 	return response
 
